@@ -14,13 +14,16 @@ struct Flags {
 };
 
 class State8080{
+public:
     Flags f;
     uint8_t a{},b{},c{},d{},e{},h{},l{};
-    uint8_t sp;
-    uint8_t pc;
+    uint16_t sp;
+    uint16_t pc;
     uint8_t ie;
     uint8_t memory[0xFFFF+1];
-
-    int Emulate8080(State8080* state);
-    void UnimplementedFunction(State8080* state);
+    uint8_t* Register(int code);
+    void Emulate8080();
+    void SubLevel();
+    void printState();
+    void UnimplementedFunction();
 };

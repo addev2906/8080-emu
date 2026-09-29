@@ -1,6 +1,8 @@
 #include "8080.hpp"
+#include <cstdint>
 #include <stdio.h>
 #include <iostream>
+#include <sys/types.h>
 int Disassemble8080::Disassemble(unsigned char* byte,int pc){
     int opbytes = 1;
     unsigned char* opcode = &byte[pc];
@@ -269,15 +271,92 @@ int Disassemble8080::Disassemble(unsigned char* byte,int pc){
     return opbytes;
 }
 
-void State8080::UnimplementedFunction(State8080* state){
-    std::cout<<pc<<"\n";
-    std::cout<<"Unimplemented functino encountered."<<"\n";
+void State8080::UnimplementedFunction(){
+    printf("Unimplemented opcode 0x%02X at pc=0x%04X\n", memory[pc], pc);
+    std::cout<<"Unimplemented function encountered."<<"\n";
     exit(1);
 }
 
+uint8_t* State8080::Register(int code){
+    switch(code){
+        case 0: return &b;break;
+        case 1: return &c;break;
+        case 2: return &d;break;
+        case 3: return &e;break;
+        case 4: return &h;break;
+        case 5: return &l;break;
+        case 6: return &memory[(h<<8) | l];break;
+        case 7: return &a;break;
+    }
+    return nullptr;
+}
 
-int State8080::Emulate8080(State8080* state){
+void State8080::printState(){
+    printf("b : 0x%02X\tcarry : %X\n", (uint8_t)b, (uint8_t)f.cy);
+    printf("c : 0x%02X\taux   : %X\n", (uint8_t)c, (uint8_t)f.ac);
+    printf("d : 0x%02X\tsign  : %X\n", (uint8_t)d, (uint8_t)f.s);
+    printf("e : 0x%02X\tparity: %X\n", (uint8_t)e, (uint8_t)f.p);
+    printf("h : 0x%02X\tzero  : %X\n", (uint8_t)h, (uint8_t)f.z);
+    printf("l : 0x%02X\n", (uint8_t)l);
+    printf("a : 0x%02X\n\n", (uint8_t)a);
+
+}
+
+uint8_t Parity(uint8_t res){
+    res ^= res >> 4;
+    res ^= res >> 2;
+    res ^= res >> 1;
+
+    return !(res&1);
+}
+
+void State8080::SubLevel(){
     unsigned char* opcode = &memory[pc];
+    int dst = (*opcode >> 3) & 0x07;
+    int src = *opcode & 0x07;
+    uint8_t& reg = *Register(dst);
+    switch(*opcode & 0xC7){
+        case 0x04: //INR
+            reg++;
+            if(reg==0) f.z=1;
+            else f.z=0;
+            f.s = reg >> 7;
+            f.p = Parity(reg);
+            break;
+        case 0x05: //DCR
+            printState();
+            reg--;
+            if(reg==0) f.z=1;
+            else f.z=0;
+            f.s = reg >> 7u;
+            f.p = Parity(reg);
+            //ac not configured yet
+            printState();
+            break;
+        case 0x06: //MVI
+            reg = memory[pc+1];
+            pc++;
+            break;
+    }
+    if((*opcode & 0xC0) == 0x40){
+        *Register(dst) = *Register(src);
+        return;
+    }
+}
+
+void State8080::Emulate8080(){
+    unsigned char* opcode = &memory[pc];
+    printf("%02X \n",*opcode);
+    int check = *opcode & 0xc7;
+    int movcheck = (*opcode & 0xC0);
+    if(*opcode==0x76){
+        printf("Program Halted.");
+        exit(0);
+    }
+    if(check == 0x05 || check == 0x04 || check == 0x06 || movcheck == 0x40){
+        SubLevel();
+    }
+    else{
     switch(*opcode){
         case 0x00: break;
         case 0x01:
@@ -285,13 +364,14 @@ int State8080::Emulate8080(State8080* state){
             c = memory[pc+1];
             pc = pc+2;
             break;
+        case 0x20:
+            break;
         default:
-            UnimplementedFunction(state);
+            UnimplementedFunction();
             break;
         // case 0x02: printf("STAX B");break;
         // case 0x03: printf("INX B");break;
         // case 0x04: printf("INR B");break;
-        // case 0x05: printf("DCR B");break;
         // case 0x06: printf("MVI B #$%02X",opcode[1]);opbytes=2;break;
         // case 0x07: printf("RLC");break;
         // case 0x08: printf("NOP");break;
@@ -299,31 +379,37 @@ int State8080::Emulate8080(State8080* state){
         // case 0x0a: printf("LDAX B");break;
         // case 0x0b: printf("DCX B");break;
         // case 0x0c: printf("INR C");break;
-        // case 0x0d: printf("DCR C");break;
         // case 0x0e: printf("MVI C #$%02X",opcode[1]);opbytes=2;break;
         // case 0x0f: printf("RRC");break;
         // case 0x10: printf("NOP");break;
-        // case 0x11: printf("LXI D #$%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
+        case 0x11: //LXI D
+            d = memory[pc+2];
+            e = memory[pc+1];
+            pc+=2;
+            break;
         // case 0x12: printf("STAX D");break;
         // case 0x13: printf("INX D");break;
         // case 0x14: printf("INR D");break;
-        // case 0x15: printf("DCR D");break;
         // case 0x16: printf("MVI D #$%02X",opcode[1]);opbytes=2;break;
         // case 0x17: printf("RAL");break;
         // case 0x18: printf("NOP");break;
         // case 0x19: printf("DAD D");break;
-        // case 0x1a: printf("LDAX D");break;
+        case 0x1a: //LDAX D
+            a = memory[((d<<8) | e)];
+            break;
         // case 0x1b: printf("DCX D");break;
         // case 0x1c: printf("INR E");break;
-        // case 0x1d: printf("DCR E");break;
         // case 0x1e: printf("MVI E #$%02X",opcode[1]);opbytes=2;break;
         // case 0x1f: printf("RAR");break;
         // case 0x20: printf("NOP");break;
-        // case 0x21: printf("LXI H #$%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
+        case 0x21: //LXI H
+            h = memory[pc+2];
+            l = memory[pc+1];
+            pc+=2;
+            break;
         // case 0x22: printf("SHLD $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         // case 0x23: printf("INX H");break;
         // case 0x24: printf("INR H");break;
-        // case 0x25: printf("DCR H");break;
         // case 0x26: printf("MVI H #$%02X",opcode[1]);opbytes=2;break;
         // case 0x27: printf("DAA");break;
         // case 0x28: printf("NOP");break;
@@ -331,15 +417,16 @@ int State8080::Emulate8080(State8080* state){
         // case 0x2a: printf("LHLD $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         // case 0x2b: printf("DCX H");break;
         // case 0x2c: printf("INR L");break;
-        // case 0x2d: printf("DCR L");break;
-        // case 0x2e: printf("MVI L #$%02X",opcode[1]);opbytes=2;break;
+        // case 0x2e: printf("MVI L #$%02X",opcode[1]);opbytes=2;break;0
         // case 0x2f: printf("CMA");break;
         // case 0x30: printf("NOP");break;
-        // case 0x31: printf("LXI SP #$%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
+        case 0x31: //"LXI SP #$%02X%02X"
+            sp = ((memory[pc+2] << 8u) | (memory[pc+1]));
+            pc+=2;
+            break;
         // case 0x32: printf("STA $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         // case 0x33: printf("INX SP");break;
         // case 0x34: printf("INR M");break;
-        // case 0x35: printf("DCR M");break;
         // case 0x36: printf("MVI M #$%02X",opcode[1]);opbytes=2;break;
         // case 0x37: printf("STC");break;
         // case 0x38: printf("NOP");break;
@@ -347,7 +434,6 @@ int State8080::Emulate8080(State8080* state){
         // case 0x3a: printf("LDA $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         // case 0x3b: printf("DCX SP");break;
         // case 0x3c: printf("INR A");break;
-        // case 0x3d: printf("DCR A");break;
         // case 0x3e: printf("MVI A #$%02X",opcode[1]);opbytes=2;break;
         // case 0x3f: printf("CMC");break;
         // case 0x40: printf("MOV B,B");break;
@@ -481,17 +567,28 @@ int State8080::Emulate8080(State8080* state){
         // case 0xc0: printf("RNZ");break;
         // case 0xc1: printf("POP B");break;
         // case 0xc2: printf("JNZ $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
-        // case 0xc3: printf("JMP $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
+        case 0xc3:
+            pc = (memory[pc+2] << 8) | (memory[pc+1]);
+            return;
         // case 0xc4: printf("CNZ $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         // case 0xc5: printf("PUSH B");break;
         // case 0xc6: printf("ADI #$%02X",opcode[1]);opbytes=2;break;
         // case 0xc7: printf("RST0");break;
         // case 0xc8: printf("RZ");break;
-        // case 0xc9: printf("RET");break;
+        // case 0xc9: //RET
+
         // case 0xca: printf("JZ $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         // case 0xcb: printf("JMP $%02X%02X",opcode[2],opcode[1]);opbytes=3;break; // undocumented dup
         // case 0xcc: printf("CZ $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
-        // case 0xcd: printf("CALL $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
+        case 0xcd:{ //CALL
+            uint16_t ret = pc+3;
+            memory[sp-1] = (ret >> 8) & 0xFF;
+            memory[sp-2] = ret & 0xFF;
+            sp-=2;
+            pc = ((memory[pc+2] << 8) | memory[pc+1]);
+            // printf("Opcode: %X \n",memory[pc]);
+            return;
+        }
         // case 0xce: printf("ACI #$%02X",opcode[1]);opbytes=2;break;
         // case 0xcf: printf("RST1");break;
         // case 0xd0: printf("RNC");break;
@@ -542,4 +639,9 @@ int State8080::Emulate8080(State8080* state){
         // case 0xfd: printf("CALL $%02X%02X",opcode[2],opcode[1]);opbytes=3;break; // undocumented dup
         // case 0xfe: printf("CPI #$%02X",opcode[1]);opbytes=2;break;
         // case 0xff: printf("RST7");break;
+    }
+    }
+
+    pc++;
+    return;
 }

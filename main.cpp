@@ -18,10 +18,20 @@ int main(int argc,char* argv[]){
     file.close();
 
     Disassemble8080 disasm;
-    int pc = 0;
-    while(pc<size){
-        pc += disasm.Disassemble(buffer,pc);
+    State8080 state;
+    for(int i=0;i<size;i++){
+        state.memory[i] = buffer[i];
     }
-
+    state.pc = 0;
+    int pc =0;
+    while(state.pc<size){
+        // state.pc+= disasm.Disassemble(state.memory,state.pc);
+        state.Emulate8080();
+    }
+    // int pc = 0;
+    // while(pc<size){
+    //     pc +=disasm.Disassemble(buffer, pc);
+    // }
+    delete[] buffer;
     return 0;
 }
