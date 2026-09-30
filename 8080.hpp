@@ -19,7 +19,7 @@ public:
     uint8_t a{},b{},c{},d{},e{},h{},l{};
     uint16_t sp;
     uint16_t pc;
-    uint8_t ie;
+    uint8_t ei;
     uint8_t memory[0xFFFF+1];
     uint8_t* Register(int code);
     void Emulate8080();
