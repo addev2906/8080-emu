@@ -21,7 +21,7 @@ public:
     uint8_t a{},b{},c{},d{},e{},h{},l{};
     uint16_t sp;
     uint16_t pc;
-    uint8_t ei;
+    uint8_t ime;
     uint8_t memory[0xFFFF+1];
     uint8_t* Register(int code);
     uint16_t shift_register{};
@@ -29,6 +29,9 @@ public:
     IODevice* io;
     void Emulate8080();
     void SubLevel();
+    void CMPr();
+    void DebugWrite(uint16_t addr, uint8_t value);
     void printState();
+    void GenerateInterrupt(uint8_t interrupt);
     void UnimplementedFunction();
 };

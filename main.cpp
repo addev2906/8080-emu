@@ -1,5 +1,5 @@
 #include "8080.hpp"
-// #include "SpaceInvadersMachine.hpp"
+#include "SpaceInvadersMachine.hpp"
 #include "Platform.hpp"
 #include <cstdint>
 #include <fstream>
@@ -34,9 +34,9 @@ int main(int argc,char* argv[]){
 
     Disassemble8080 disasm;
     State8080 state;
-    // SpaceInvadersMachine machine;
+    SpaceInvadersMachine machine;
     uint32_t pixels[224*256];
-    // state.io = &machine;
+    state.io = &machine;
     Platform platform("Invaders",WINDOW_WIDTH, WINDOW_HEIGHT,TEXTURE_WIDTH,TEXTURE_HEIGHT);
     for(int i=0;i<size;i++){
         state.memory[i] = buffer[i];
@@ -56,9 +56,16 @@ int main(int argc,char* argv[]){
             }
         }
 
-        for (int i = 0; i < 8333; i++) {
+        for (int i = 0; i < 8333/2; i++) {
             state.Emulate8080();
         }
+        state.GenerateInterrupt(1);   // RST 1 — mid-screen
+
+        for (int i = 0; i < 8333/2; i++) {
+            state.Emulate8080();
+        }
+        state.GenerateInterrupt(2);   // RST 2 — end-screen/vblank
+
         for(int i=0;i<7168;i++){
             uint8_t byte = state.memory[0x2400 + i];
 

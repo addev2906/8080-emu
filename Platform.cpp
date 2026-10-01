@@ -2,6 +2,7 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
+#include <cstdint>
 
 Platform::Platform(const char *windowName,int windowWidth, int windowHeight,int textureWidth, int textureHeight){
 
@@ -24,3 +25,6 @@ void Platform::Update(void const* buffer, int pitch){
 	SDL_RenderTexture(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
+// bool Platform::processInput(uint8_t* keys){
+
+// }

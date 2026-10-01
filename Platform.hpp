@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
+#include <cstdint>
 
 class Platform{
 public:
@@ -8,6 +9,7 @@ public:
     ~Platform();
 
     void Update(void const* buffer, int pitch);
+    bool processInput(uint8_t* keys);
 
 private:
     SDL_Window* window{};
