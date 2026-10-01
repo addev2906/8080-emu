@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <sys/types.h>
+
 int Disassemble8080::Disassemble(unsigned char* byte,int pc){
     int opbytes = 1;
     unsigned char* opcode = &byte[pc];
@@ -617,6 +618,7 @@ void State8080::Emulate8080(){
             break;
         // case 0xd2: printf("JNC $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         case 0xd3: //To be implemented
+            // io->WritePort(memory[pc+1], a);
             pc++;
             break;
         // case 0xd4: printf("CNC $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
@@ -630,7 +632,10 @@ void State8080::Emulate8080(){
         // case 0xd8: printf("RC");break;
         // case 0xd9: printf("RET");break; // undocumented dup
         // case 0xda: printf("JC $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
-        // case 0xdb: printf("IN #$%02X",opcode[1]);opbytes=2;break;
+        case 0xdb:
+            // a = io->ReadPort(memory[pc+1]);
+            pc++;
+            break;
         // case 0xdc: printf("CC $%02X%02X",opcode[2],opcode[1]);opbytes=3;break;
         // case 0xdd: printf("CALL $%02X%02X",opcode[2],opcode[1]);opbytes=3;break; // undocumented dup
         // case 0xde: printf("SBI #$%02X",opcode[1]);opbytes=2;break;

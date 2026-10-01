@@ -1,4 +1,6 @@
 #include <cstdint>
+#include "SpaceInvadersMachine.hpp"
+#include "io_device.hpp"
 class Disassemble8080{
 public:
     int Disassemble(unsigned char* byte,int pc);
@@ -22,6 +24,9 @@ public:
     uint8_t ei;
     uint8_t memory[0xFFFF+1];
     uint8_t* Register(int code);
+    uint16_t shift_register{};
+    uint8_t shift_offset{};
+    IODevice* io;
     void Emulate8080();
     void SubLevel();
     void printState();
