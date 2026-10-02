@@ -1405,8 +1405,8 @@ void State8080::Emulate8080() {
       }
       pc += 2;
       break;
-    case 0xd3: // To be implemented
-      // io->WritePort(memory[pc+1], a);
+    case 0xd3:
+      if (io) io->WritePort(memory[pc + 1], a);
       pc++;
       break;
     case 0xd4:
@@ -1461,7 +1461,8 @@ void State8080::Emulate8080() {
       break;
 
     case 0xdb: {
-      // a = io->ReadPort(memory[pc+1]);
+      if (io)
+        a = io->ReadPort(memory[pc + 1]);
       pc++;
       break;
     }

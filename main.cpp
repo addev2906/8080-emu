@@ -54,6 +54,23 @@ int main(int argc,char* argv[]){
             if (event.type == SDL_EVENT_QUIT) {
                 quit = true;
             }
+            else if (event.type == SDL_EVENT_KEY_DOWN) {
+                switch (event.key.key) {
+                    case SDLK_LEFT:  machine.KeyDown(P1_LEFT);  break;
+                    case SDLK_RIGHT: machine.KeyDown(P1_RIGHT); break;
+                    case SDLK_SPACE: machine.KeyDown(P1_FIRE);  break;
+                    case SDLK_1:     machine.KeyDown(P1_START); break;
+                    case SDLK_C:     machine.KeyDown(COIN);     break;
+                }
+            } else if (event.type == SDL_EVENT_KEY_UP) {
+                switch (event.key.key) {
+                    case SDLK_LEFT:  machine.KeyUp(P1_LEFT);  break;
+                    case SDLK_RIGHT: machine.KeyUp(P1_RIGHT); break;
+                    case SDLK_SPACE: machine.KeyUp(P1_FIRE);  break;
+                    case SDLK_1:     machine.KeyUp(P1_START); break;
+                    case SDLK_C:     machine.KeyUp(COIN);     break;
+                }
+            }
         }
 
         for (int i = 0; i < 8333/2; i++) {
