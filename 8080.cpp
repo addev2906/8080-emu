@@ -1,10 +1,12 @@
-#include "8080.hpp"
+#include "headers/8080.hpp"
 #include <SDL3/SDL_events.h>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <stdio.h>
 #include <sys/types.h>
+
+unsigned char debug = 0;
 
 int Disassemble8080::Disassemble(unsigned char *byte, int pc) {
   int opbytes = 1;
@@ -870,6 +872,7 @@ uint8_t *State8080::Register(int code) {
 }
 
 void State8080::printState() {
+    if(debug==0) return;
   printf("b : 0x%02X\tcarry : %X\n", (uint8_t)b, (uint8_t)f.cy);
   printf("c : 0x%02X\taux   : %X\n", (uint8_t)c, (uint8_t)f.ac);
   printf("d : 0x%02X\tsign  : %X\n", (uint8_t)d, (uint8_t)f.s);
@@ -894,7 +897,7 @@ uint8_t Parity(uint8_t res) {
 void State8080::GenerateInterrupt(uint8_t interrupt) {
   if (!ime)
     return;
-  printf("INTERRUPT %d\n", interrupt);
+  if(debug!=0)printf("INTERRUPT %d\n", interrupt);
   uint16_t ret = pc;
   DebugWrite(sp - 1, (ret >> 8) & 0xFF);
   DebugWrite(sp - 2, ret & 0xFF);
@@ -1036,7 +1039,7 @@ void State8080::SubLevel() {
 
 void State8080::Emulate8080() {
   unsigned char *opcode = &memory[pc];
-  printf("%04X : %02X \n", pc, *opcode);
+  if(debug!=0)printf("%04X : %02X \n", pc, *opcode);
   int check = *opcode & 0xc7;
   int movcheck = (*opcode & 0xC0);
   int cmpCheck = (*opcode & 0xF8);
@@ -1278,8 +1281,6 @@ void State8080::Emulate8080() {
       break;
     case 0xc2:
       printState();
-      printf("0x%02X", memory[pc + 2]);
-      printf("0x%02X", memory[pc + 1]);
       if (!f.z) {
         pc = ((memory[pc + 2] << 8) | memory[pc + 1]);
         printState();
@@ -1406,7 +1407,8 @@ void State8080::Emulate8080() {
       pc += 2;
       break;
     case 0xd3:
-      if (io) io->WritePort(memory[pc + 1], a);
+      if (io)
+        io->WritePort(memory[pc + 1], a);
       pc++;
       break;
     case 0xd4:

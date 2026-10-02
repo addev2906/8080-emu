@@ -1,6 +1,6 @@
-#include "8080.hpp"
-#include "SpaceInvadersMachine.hpp"
-#include "Platform.hpp"
+#include "headers/8080.hpp"
+#include "headers/SpaceInvadersMachine.hpp"
+#include "headers/Platform.hpp"
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -32,7 +32,7 @@ int main(int argc,char* argv[]){
     file.read(reinterpret_cast<char*>(buffer),size);
     file.close();
 
-    Disassemble8080 disasm;
+    // Disassemble8080 disasm;
     State8080 state;
     SpaceInvadersMachine machine;
     uint32_t pixels[224*256];

@@ -1,4 +1,4 @@
-#include "Platform.hpp"
+#include "headers/Platform.hpp"
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
@@ -25,6 +25,3 @@ void Platform::Update(void const* buffer, int pitch){
 	SDL_RenderTexture(renderer, texture, nullptr, nullptr);
 	SDL_RenderPresent(renderer);
 }
-// bool Platform::processInput(uint8_t* keys){
-
-// }
