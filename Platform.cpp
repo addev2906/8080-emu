@@ -2,7 +2,6 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_video.h>
-#include <cstdint>
 
 Platform::Platform(const char *windowName,int windowWidth, int windowHeight,int textureWidth, int textureHeight){
 

@@ -8,7 +8,7 @@
 #include <chrono>
 #include <thread>
 
-#define SCALE 2
+#define SCALE 3
 #define WINDOW_WIDTH (224*SCALE)
 #define WINDOW_HEIGHT (256*SCALE)
 
